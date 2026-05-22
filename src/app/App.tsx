@@ -29,6 +29,9 @@ type MockUser = {
   title: string;
   initials: string;
   team: string;
+  mobile: string;
+  skills: string[];
+  panelLevel: "L1" | "L2";
 };
 
 /* ─── Data ─── */
@@ -44,6 +47,9 @@ const mockUsers: MockUser[] = [
     title: "Talent Acquisition Partner",
     initials: "MI",
     team: "Talent Acquisition",
+    mobile: "+91 98765 41021",
+    skills: ["Stakeholder Management", "Recruiting Operations", "Interview Scheduling"],
+    panelLevel: "L1",
   },
   {
     id: "leadership-001",
@@ -54,6 +60,9 @@ const mockUsers: MockUser[] = [
     title: "Engineering Director",
     initials: "AM",
     team: "Technology Leadership",
+    mobile: "+91 98765 41022",
+    skills: ["Leadership", "System Design", "Hiring Strategy"],
+    panelLevel: "L2",
   },
   {
     id: "panelist-001",
@@ -64,6 +73,9 @@ const mockUsers: MockUser[] = [
     title: "Principal Engineer",
     initials: "SR",
     team: "Interview Panel",
+    mobile: "+91 98765 41023",
+    skills: ["System Design", "Distributed Systems", "Go", "React"],
+    panelLevel: "L2",
   },
   {
     id: "manager-001",
@@ -74,8 +86,37 @@ const mockUsers: MockUser[] = [
     title: "Engineering Manager",
     initials: "PS",
     team: "Data Platform",
+    mobile: "+91 98765 41024",
+    skills: ["Data Engineering", "Leadership", "Python", "React"],
+    panelLevel: "L2",
   },
 ];
+
+const coreSkillOptions = [
+  "Recruiting Operations",
+  "Interview Scheduling",
+  "Stakeholder Management",
+  "Hiring Strategy",
+  "Leadership",
+  "System Design",
+  "Distributed Systems",
+  "React",
+  "TypeScript",
+  "Data Engineering",
+  "Python",
+  "Security",
+  "Cloud Architecture",
+  "Go",
+  "Kubernetes",
+  "Mobile UX",
+];
+
+const editableSkillOptions = Array.from(
+  new Set([
+    ...coreSkillOptions,
+    ...Array.from({ length: 500 - coreSkillOptions.length }, (_, index) => `Enterprise Skill ${String(index + 1).padStart(3, "0")}`),
+  ])
+);
 
 const panelists = [
   { id: 1, name: "Sanjana Rao", role: "Principal Engineer", dept: "Platform", avatar: "SR", skills: ["System Design", "Distributed Systems", "Go", "React"], utilization: 78, slotsThisWeek: 6, totalInterviews: 142, rating: 4.8, status: "available" as Status },
@@ -171,6 +212,48 @@ const managerReportees = [
   { name: "Rhea Menon", role: "Spark Engineer", initials: "RM", slots: 0, lastSubmitted: "Not submitted", status: "Critical" },
 ];
 
+const helperSlotsByPanelist: Record<number, { id: string; date: string; time: string; status: "available" | "booked"; note: string }[]> = {
+  1: [
+    { id: "sr-1", date: "Tue Jun 2", time: "2:00 PM", status: "booked", note: "Booked for Aarav Iyer" },
+    { id: "sr-2", date: "Thu Jun 4", time: "3:00 PM", status: "available", note: "Open from submitted slots" },
+    { id: "sr-3", date: "Fri Jun 5", time: "10:00 AM", status: "available", note: "Open from submitted slots" },
+  ],
+  2: [
+    { id: "rk-1", date: "Tue Jun 2", time: "10:00 AM", status: "booked", note: "Booked for Rahul Patel" },
+    { id: "rk-2", date: "Wed Jun 3", time: "11:00 AM", status: "available", note: "Open from submitted slots" },
+    { id: "rk-3", date: "Thu Jun 4", time: "3:00 PM", status: "available", note: "Open from submitted slots" },
+    { id: "rk-4", date: "Fri Jun 5", time: "10:00 AM", status: "booked", note: "Booked for React screen" },
+  ],
+  3: [
+    { id: "ps-1", date: "Tue Jun 2", time: "10:00 AM", status: "available", note: "Open from submitted slots" },
+    { id: "ps-2", date: "Tue Jun 2", time: "2:00 PM", status: "booked", note: "Booked for Neha Reddy" },
+    { id: "ps-3", date: "Fri Jun 5", time: "10:00 AM", status: "available", note: "Open from submitted slots" },
+  ],
+  4: [
+    { id: "vn-1", date: "Wed Jun 3", time: "11:00 AM", status: "available", note: "Open from submitted slots" },
+    { id: "vn-2", date: "Thu Jun 4", time: "9:00 AM", status: "booked", note: "Booked for security round" },
+    { id: "vn-3", date: "Fri Jun 5", time: "11:00 AM", status: "available", note: "Open from submitted slots" },
+  ],
+  5: [
+    { id: "mk-1", date: "Thu Jun 4", time: "3:00 PM", status: "booked", note: "Booked for Kavya Menon" },
+    { id: "mk-2", date: "Fri Jun 5", time: "2:00 PM", status: "available", note: "Open from submitted slots" },
+  ],
+  6: [
+    { id: "km-1", date: "Fri Jun 5", time: "10:00 AM", status: "available", note: "Open from submitted slots" },
+    { id: "km-2", date: "Fri Jun 5", time: "3:00 PM", status: "available", note: "Open from submitted slots" },
+  ],
+  7: [
+    { id: "ad-1", date: "Tue Jun 2", time: "11:00 AM", status: "available", note: "Open from submitted slots" },
+    { id: "ad-2", date: "Wed Jun 3", time: "2:00 PM", status: "booked", note: "Booked for frontend round" },
+    { id: "ad-3", date: "Thu Jun 4", time: "4:00 PM", status: "available", note: "Open from submitted slots" },
+  ],
+  8: [
+    { id: "nb-1", date: "Mon Jun 1", time: "3:00 PM", status: "available", note: "Open from submitted slots" },
+    { id: "nb-2", date: "Wed Jun 3", time: "10:00 AM", status: "booked", note: "Booked for TypeScript round" },
+    { id: "nb-3", date: "Fri Jun 5", time: "12:00 PM", status: "available", note: "Open from submitted slots" },
+  ],
+};
+
 const calendarData: Record<string, Record<string, Status>> = {
   "Sanjana Rao": { "Mon 26-9:00": "available", "Mon 26-10:00": "booked", "Mon 26-11:00": "booked", "Tue 27-10:00": "available", "Tue 27-11:00": "available", "Wed 28-14:00": "booked", "Thu 29-9:00": "available", "Thu 29-10:00": "available", "Fri 30-15:00": "available" },
   "Rohan Kulkarni": { "Mon 26-14:00": "available", "Mon 26-15:00": "available", "Tue 27-11:00": "booked", "Wed 28-9:00": "available", "Wed 28-10:00": "available", "Thu 29-13:00": "available", "Fri 30-10:00": "booked" },
@@ -186,12 +269,12 @@ const notifications = [
   { id: 5, type: "error", message: "BK-2852 cancelled — Ishita Bose declined interview. Slot released back to pool", time: "3h ago", read: true },
 ];
 
-const deptDistribution = [
-  { name: "Platform", value: 28, color: "#0052cc" },
-  { name: "Frontend", value: 18, color: "#059669" },
-  { name: "Data", value: 22, color: "#f59e0b" },
-  { name: "Security", value: 12, color: "#7c3aed" },
-  { name: "Infrastructure", value: 20, color: "#06b6d4" },
+const practiceDistribution = [
+  { name: "Application Development", value: 30, color: "#0052cc" },
+  { name: "Storage and System Development", value: 22, color: "#059669" },
+  { name: "Testing", value: 16, color: "#f59e0b" },
+  { name: "Infra and Cloud Ops", value: 20, color: "#7c3aed" },
+  { name: "Payments", value: 12, color: "#06b6d4" },
 ];
 
 /* ─── Utils ─── */
@@ -286,15 +369,6 @@ function DashboardView({ onNavigate, user }: { onNavigate: (v: string) => void; 
         <KpiCard label="Panel Utilization" value="73%" delta="+8pp" deltaUp icon={<Activity size={18} className="text-amber-600" />} color="bg-amber-50" sub="avg across teams" />
       </div>
 
-      {/* Alert Bar */}
-      <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex items-center gap-3">
-        <AlertTriangle size={16} className="text-amber-600 shrink-0" />
-        <p className="text-sm text-amber-800 font-medium">ML/AI skill coverage at 28% — only 2 panelists for 12 pending requisitions.</p>
-        <button onClick={() => onNavigate("analytics")} className="ml-auto text-xs font-semibold text-amber-700 border border-amber-300 px-2.5 py-1 rounded-md hover:bg-amber-100 transition-colors whitespace-nowrap">
-          View Gap Analysis
-        </button>
-      </div>
-
       {/* Main Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* Interview Volume Chart */}
@@ -331,16 +405,16 @@ function DashboardView({ onNavigate, user }: { onNavigate: (v: string) => void; 
           </ResponsiveContainer>
         </div>
 
-        {/* Dept Distribution */}
+        {/* Practice Distribution */}
         <div className="bg-white rounded-xl border border-black/[0.07] p-5">
           <div className="mb-4">
-            <h3 className="font-semibold text-slate-800 text-sm">Panel by Department</h3>
+            <h3 className="font-semibold text-slate-800 text-sm">Panel by Practice</h3>
             <p className="text-xs text-slate-400 mt-0.5">Interview slot distribution</p>
           </div>
           <ResponsiveContainer width="100%" height={160}>
             <PieChart>
-              <Pie data={deptDistribution} cx="50%" cy="50%" innerRadius={48} outerRadius={72} paddingAngle={3} dataKey="value">
-                {deptDistribution.map((entry, i) => (
+              <Pie data={practiceDistribution} cx="50%" cy="50%" innerRadius={48} outerRadius={72} paddingAngle={3} dataKey="value">
+                {practiceDistribution.map((entry, i) => (
                   <Cell key={i} fill={entry.color} strokeWidth={0} />
                 ))}
               </Pie>
@@ -348,7 +422,7 @@ function DashboardView({ onNavigate, user }: { onNavigate: (v: string) => void; 
             </PieChart>
           </ResponsiveContainer>
           <div className="grid grid-cols-2 gap-1.5 mt-2">
-            {deptDistribution.map((d) => (
+            {practiceDistribution.map((d) => (
               <div key={d.name} className="flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full shrink-0" style={{ background: d.color }} />
                 <span className="text-xs text-slate-600 truncate">{d.name}</span>
@@ -981,6 +1055,212 @@ function BookingsView() {
   );
 }
 
+function SlotHelperView() {
+  const [selectedSkills, setSelectedSkills] = useState<string[]>(["React"]);
+  const [skillSearch, setSkillSearch] = useState("");
+  const [skillsOpen, setSkillsOpen] = useState(false);
+  const [panelLevelFilter, setPanelLevelFilter] = useState<"All" | "L1" | "L2">("All");
+  const filteredSkillOptions = useMemo(() => {
+    const query = skillSearch.trim().toLowerCase();
+    return (query ? editableSkillOptions.filter(skill => skill.toLowerCase().includes(query)) : editableSkillOptions).slice(0, 80);
+  }, [skillSearch]);
+  const matchingPanelists = panelists.filter(panelist =>
+    (selectedSkills.length === 0 || selectedSkills.some(selectedSkill => panelist.skills.includes(selectedSkill))) &&
+    (panelLevelFilter === "All" || (panelist.id % 2 === 0 ? "L1" : "L2") === panelLevelFilter)
+  );
+  const [selectedPanelistId, setSelectedPanelistId] = useState<number | null>(2);
+  const selectedPanelist = matchingPanelists.find(panelist => panelist.id === selectedPanelistId) || matchingPanelists[0] || null;
+  const selectedSlots = selectedPanelist ? helperSlotsByPanelist[selectedPanelist.id] || [] : [];
+  const helperWeekDays = ["Mon Jun 1", "Tue Jun 2", "Wed Jun 3", "Thu Jun 4", "Fri Jun 5"];
+  const helperTimeSlots = ["9:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00"];
+  const toGridTime = (time: string) => {
+    const [rawHour, minutePart] = time.split(":");
+    const minutes = minutePart.slice(0, 2);
+    const meridiem = minutePart.slice(3);
+    let hour = Number(rawHour);
+    if (meridiem === "PM" && hour !== 12) hour += 12;
+    if (meridiem === "AM" && hour === 12) hour = 0;
+    return `${hour}:${minutes}`;
+  };
+  const toggleSkillFilter = (skill: string) => {
+    setSelectedSkills(current => current.includes(skill) ? current.filter(item => item !== skill) : [...current, skill]);
+    setSelectedPanelistId(null);
+  };
+
+  return (
+    <div className="space-y-5">
+      <div>
+        <h1 className="text-xl font-bold text-slate-900">Slot Helper</h1>
+        <p className="text-sm text-slate-500 mt-0.5">Search by skill, review matching panelists, and inspect submitted slot status.</p>
+      </div>
+
+      <div className="bg-white rounded-xl border border-black/[0.07] p-5">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_220px] gap-4">
+          <div>
+            <label className="text-sm font-semibold text-slate-700 block mb-1.5">Skills</label>
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setSkillsOpen(open => !open)}
+                className="w-full min-h-11 rounded-lg border border-slate-200 bg-white px-3 py-2 text-left flex items-center gap-2 hover:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+              >
+                <Search size={15} className="text-slate-400 shrink-0" />
+                <span className={cn("text-sm flex-1", selectedSkills.length ? "text-slate-800 font-medium" : "text-slate-400")}>
+                  {selectedSkills.length ? `${selectedSkills.length} skills selected` : "Search and select skills"}
+                </span>
+                <ChevronDown size={15} className="text-slate-400 shrink-0" />
+              </button>
+
+              {skillsOpen && (
+                <div className="absolute z-40 mt-2 w-full rounded-xl border border-slate-200 bg-white shadow-xl overflow-hidden">
+                  <div className="p-3 border-b border-slate-100">
+                    <div className="relative">
+                      <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                      <input
+                        value={skillSearch}
+                        onChange={event => setSkillSearch(event.target.value)}
+                        className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-500/20"
+                        placeholder="Search skills..."
+                      />
+                    </div>
+                  </div>
+                  <div className="max-h-72 overflow-y-auto divide-y divide-slate-50">
+                    {filteredSkillOptions.map(skill => {
+                      const selected = selectedSkills.includes(skill);
+                      return (
+                        <button key={skill} type="button" onClick={() => toggleSkillFilter(skill)} className={cn("w-full px-3 py-2.5 text-left flex items-center gap-3 text-sm hover:bg-blue-50", selected && "bg-blue-50")}>
+                          <span className={cn("w-4 h-4 rounded border flex items-center justify-center shrink-0", selected ? "bg-blue-600 border-blue-600" : "bg-white border-slate-300")}>
+                            {selected && <Check size={11} className="text-white" />}
+                          </span>
+                          <span className="font-medium text-slate-700">{skill}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <div className="px-3 py-2 border-t border-slate-100 bg-slate-50 flex items-center justify-between">
+                    <span className="text-xs text-slate-500">Showing {filteredSkillOptions.length} skills</span>
+                    <button type="button" onClick={() => setSkillsOpen(false)} className="text-xs font-semibold text-blue-600 hover:text-blue-800">Done</button>
+                  </div>
+                </div>
+              )}
+            </div>
+            {selectedSkills.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-2">
+                {selectedSkills.map(skill => (
+                  <span key={skill} className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-blue-50 border border-blue-100 text-xs font-semibold text-blue-700">
+                    {skill}
+                    <button type="button" onClick={() => toggleSkillFilter(skill)} className="text-blue-400 hover:text-red-500">
+                      <X size={12} />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div>
+            <label className="text-sm font-semibold text-slate-700 block mb-1.5">Panel Level</label>
+            <select
+              value={panelLevelFilter}
+              onChange={event => {
+                setPanelLevelFilter(event.target.value as "All" | "L1" | "L2");
+                setSelectedPanelistId(null);
+              }}
+              className="w-full h-11 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-500/20"
+            >
+              <option value="All">All Levels</option>
+              <option value="L1">L1</option>
+              <option value="L2">L2</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-xl border border-black/[0.07] p-4">
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <h3 className="font-bold text-slate-800 text-sm">Select Panelist</h3>
+            <p className="text-xs text-slate-500 mt-0.5">{matchingPanelists.length} panelists match the selected skills and level.</p>
+          </div>
+          {selectedPanelist && (
+            <span className="text-xs font-semibold text-slate-500">{selectedPanelist.name} · {selectedPanelist.id % 2 === 0 ? "L1" : "L2"}</span>
+          )}
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {matchingPanelists.map(panelist => {
+            const selected = selectedPanelist?.id === panelist.id;
+            const panelLevel = panelist.id % 2 === 0 ? "L1" : "L2";
+            const slots = helperSlotsByPanelist[panelist.id] || [];
+            const availableCount = slots.filter(slot => slot.status === "available").length;
+            return (
+              <button
+                key={panelist.id}
+                onClick={() => setSelectedPanelistId(panelist.id)}
+                className={cn("flex items-center gap-2 px-3 py-2 rounded-lg border text-sm transition-all", selected ? "bg-blue-600 border-blue-600 text-white shadow-sm" : "bg-white border-slate-200 text-slate-700 hover:border-blue-300 hover:bg-blue-50")}
+              >
+                <span className={cn("w-2 h-2 rounded-full", panelist.status === "available" ? "bg-emerald-400" : panelist.status === "booked" ? "bg-red-400" : "bg-amber-400")} />
+                <span className="font-semibold">{panelist.name}</span>
+                <span className={cn("text-[10px] font-bold px-1.5 py-0.5 rounded", selected ? "bg-white/15 text-white" : "bg-slate-100 text-slate-500")}>{panelLevel}</span>
+                <span className={cn("text-[10px]", selected ? "text-blue-100" : "text-slate-400")}>{availableCount} open</span>
+              </button>
+            );
+          })}
+          {matchingPanelists.length === 0 && (
+            <div className="px-3 py-2 text-sm text-slate-500">No panelists found for these filters.</div>
+          )}
+        </div>
+      </div>
+
+      <div className="bg-white rounded-xl border border-black/[0.07] overflow-hidden">
+        <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+          <div>
+            <h3 className="font-bold text-slate-800 text-sm">Weekly Slot Availability</h3>
+            <p className="text-xs text-slate-500 mt-0.5">Week of Jun 1-5, 2026 · {selectedPanelist ? selectedPanelist.name : "Select a panelist"}</p>
+          </div>
+          <div className="flex items-center gap-4 text-xs text-slate-500">
+            <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-emerald-300" /> Available</span>
+            <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded bg-blue-300" /> Booked</span>
+          </div>
+        </div>
+
+        <div className="grid" style={{ gridTemplateColumns: "82px repeat(5, minmax(118px, 1fr))" }}>
+          <div className="px-3 py-3 border-b border-r border-slate-100 bg-slate-50" />
+          {helperWeekDays.map(day => {
+            const [weekday, month, date] = day.split(" ");
+            return (
+              <div key={day} className="px-3 py-3 border-b border-r border-slate-100 bg-slate-50 text-center">
+                <p className="text-xs font-bold text-slate-700">{weekday}</p>
+                <p className="text-lg font-bold text-slate-900 leading-tight">{date}</p>
+                <p className="text-[10px] text-slate-400 font-semibold uppercase">{month}</p>
+              </div>
+            );
+          })}
+
+          {helperTimeSlots.map(time => (
+            <Fragment key={`helper-row-${time}`}>
+              <div className="px-3 py-2 border-b border-r border-slate-100 bg-slate-50/50 flex items-center">
+                <span className="text-xs text-slate-400 font-medium" style={{ fontFamily: "JetBrains Mono, monospace" }}>{time}</span>
+              </div>
+              {helperWeekDays.map(day => {
+                const slot = selectedSlots.find(item => item.date === day && toGridTime(item.time) === time);
+                return (
+                  <div key={`${day}-${time}`} className="border-b border-r border-slate-100 p-1.5 min-h-[52px]">
+                    {slot && (
+                      <button className={cn("h-full min-h-10 w-full rounded border text-xs font-bold transition-all", slot.status === "available" ? "bg-emerald-100 border-emerald-300 text-emerald-800 hover:bg-emerald-200" : "bg-blue-100 border-blue-300 text-blue-800 cursor-default")}>
+                        {slot.status === "available" ? "Open" : "Booked"}
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </Fragment>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function AnalyticsView() {
   return (
     <div className="space-y-5">
@@ -1547,6 +1827,188 @@ function ManagerInsightsView({ user }: { user: MockUser }) {
   );
 }
 
+function ProfileView({ user, onUpdateSkills }: { user: MockUser; onUpdateSkills: (skills: string[]) => void }) {
+  const [draftSkills, setDraftSkills] = useState(user.skills);
+  const [skillSearch, setSkillSearch] = useState("");
+  const [skillsOpen, setSkillsOpen] = useState(false);
+  const hasChanges = draftSkills.length !== user.skills.length || draftSkills.some(skill => !user.skills.includes(skill));
+  const filteredSkills = useMemo(() => {
+    const query = skillSearch.trim().toLowerCase();
+    const results = query
+      ? editableSkillOptions.filter(skill => skill.toLowerCase().includes(query))
+      : editableSkillOptions;
+
+    return results.slice(0, 80);
+  }, [skillSearch]);
+
+  const toggleSkill = (skill: string) => {
+    setDraftSkills(current => current.includes(skill) ? current.filter(item => item !== skill) : [...current, skill]);
+  };
+
+  return (
+    <div className="space-y-5">
+      <div>
+        <h1 className="text-xl font-bold text-slate-900">My Profile</h1>
+        <p className="text-sm text-slate-500 mt-0.5">Profile details from Outlook identity. Skills are editable for panel matching.</p>
+      </div>
+
+      <div className="bg-white rounded-xl border border-black/[0.07] overflow-hidden">
+        <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Avatar initials={user.initials} size="lg" />
+            <div>
+              <h3 className="font-bold text-slate-900">{user.name}</h3>
+              <p className="text-sm text-slate-500">{user.title}</p>
+            </div>
+          </div>
+          <span className="px-2.5 py-1 rounded-lg border border-blue-200 bg-blue-50 text-xs font-bold text-blue-700">{user.role}</span>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 divide-y lg:divide-y-0 lg:divide-x divide-slate-100">
+          <div className="p-5">
+            <h4 className="text-sm font-bold text-slate-800 mb-4">Profile details</h4>
+            <div className="space-y-3">
+              {[
+                ["Name", user.name],
+                ["Designation", user.title],
+                ["Mobile Number", user.mobile],
+                ["Panel Level", user.panelLevel],
+                ["Email", user.email],
+              ].map(([label, value]) => (
+                <div key={label} className="grid grid-cols-[140px_1fr] items-center gap-3">
+                  <span className="text-xs font-semibold text-slate-500">{label}</span>
+                  <span className="text-sm font-semibold text-slate-800">{value}</span>
+                </div>
+              ))}
+            </div>
+            <div className="mt-5 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+              <p className="text-xs text-slate-500">Name, designation, mobile number, and panel level are read-only because they come from Outlook/HR identity data.</p>
+            </div>
+          </div>
+
+          <div className="p-5">
+            <div className="flex items-center justify-between gap-3 mb-4">
+              <div>
+                <h4 className="text-sm font-bold text-slate-800">Skills</h4>
+                <p className="text-xs text-slate-500 mt-0.5">Select skills used for interview panel matching.</p>
+              </div>
+              <button
+                onClick={() => onUpdateSkills(draftSkills)}
+                disabled={!hasChanges}
+                className={cn("text-sm px-3 py-1.5 rounded-lg font-medium transition-colors", hasChanges ? "bg-blue-600 text-white hover:bg-blue-700" : "bg-slate-100 text-slate-400 cursor-not-allowed")}
+              >
+                Update Skills
+              </button>
+            </div>
+
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setSkillsOpen(open => !open)}
+                className="w-full min-h-11 rounded-lg border border-slate-200 bg-white px-3 py-2 text-left flex items-center gap-2 hover:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+              >
+                <Search size={15} className="text-slate-400 shrink-0" />
+                <span className={cn("text-sm flex-1", draftSkills.length ? "text-slate-800 font-medium" : "text-slate-400")}>
+                  {draftSkills.length ? `${draftSkills.length} skills selected` : "Search and select skills"}
+                </span>
+                <span className="text-xs text-slate-400">{editableSkillOptions.length} skills</span>
+                <ChevronDown size={15} className="text-slate-400 shrink-0" />
+              </button>
+
+            </div>
+
+            {skillsOpen && (
+              <div className="fixed inset-0 z-50 bg-slate-900/35 p-6 flex items-center justify-center">
+                <div className="w-full max-w-5xl h-[82vh] rounded-xl bg-white shadow-2xl border border-slate-200 flex flex-col overflow-hidden">
+                  <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between gap-4">
+                    <div>
+                      <h3 className="text-base font-bold text-slate-900">Select Skills</h3>
+                      <p className="text-xs text-slate-500 mt-0.5">{draftSkills.length} selected from {editableSkillOptions.length} available skills</p>
+                    </div>
+                    <button type="button" onClick={() => setSkillsOpen(false)} className="w-9 h-9 rounded-lg flex items-center justify-center text-slate-500 hover:bg-slate-100">
+                      <X size={18} />
+                    </button>
+                  </div>
+
+                  <div className="p-4 border-b border-slate-100">
+                    <div className="relative">
+                      <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                      <input
+                        value={skillSearch}
+                        onChange={event => setSkillSearch(event.target.value)}
+                        className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2.5 pl-9 pr-3 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-500/20"
+                        placeholder="Search skills..."
+                        autoFocus
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-[1fr_320px]">
+                    <div className="overflow-y-auto divide-y divide-slate-50">
+                      {filteredSkills.map(skill => {
+                        const selected = draftSkills.includes(skill);
+                        return (
+                          <button
+                            key={skill}
+                            type="button"
+                            onClick={() => toggleSkill(skill)}
+                            className={cn("w-full px-5 py-3 text-left flex items-center gap-3 text-sm hover:bg-blue-50", selected && "bg-blue-50")}
+                          >
+                            <span className={cn("w-4 h-4 rounded border flex items-center justify-center shrink-0", selected ? "bg-blue-600 border-blue-600" : "bg-white border-slate-300")}>
+                              {selected && <Check size={11} className="text-white" />}
+                            </span>
+                            <span className="font-medium text-slate-700">{skill}</span>
+                          </button>
+                        );
+                      })}
+                      {filteredSkills.length === 0 && (
+                        <div className="px-5 py-10 text-center text-sm text-slate-500">No skills found</div>
+                      )}
+                    </div>
+
+                    <div className="border-t lg:border-t-0 lg:border-l border-slate-100 bg-slate-50 p-4 overflow-y-auto">
+                      <p className="text-xs font-bold uppercase tracking-wide text-slate-500 mb-3">Selected skills</p>
+                      <div className="flex flex-wrap gap-2">
+                        {draftSkills.map(skill => (
+                          <span key={skill} className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-white border border-slate-200 text-xs font-medium text-slate-700">
+                            {skill}
+                            <button type="button" onClick={() => toggleSkill(skill)} className="text-slate-400 hover:text-red-500">
+                              <X size={12} />
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="px-5 py-3 border-t border-slate-100 bg-white flex items-center justify-between">
+                    <span className="text-xs text-slate-500">Showing {filteredSkills.length} matching skills</span>
+                    <button type="button" onClick={() => setSkillsOpen(false)} className="text-sm bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700">Done</button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="mt-5">
+              <p className="text-xs font-semibold text-slate-500 mb-2">Current selected skills</p>
+              <div className="flex flex-wrap gap-2">
+                {draftSkills.map(skill => (
+                  <span key={skill} className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-slate-100 text-xs font-medium text-slate-700">
+                    {skill}
+                    <button type="button" onClick={() => toggleSkill(skill)} className="text-slate-400 hover:text-red-500">
+                      <X size={12} />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function LoginView({ onLogin }: { onLogin: (user: MockUser) => void }) {
   const [email, setEmail] = useState(mockUsers[0].email);
   const [password, setPassword] = useState(mockUsers[0].password);
@@ -1685,7 +2147,7 @@ function LoginView({ onLogin }: { onLogin: (user: MockUser) => void }) {
   );
 }
 
-function OutlookMockShell({ children, user, onUserChange }: { children: React.ReactNode; user: MockUser; onUserChange: (user: MockUser) => void }) {
+function OutlookMockShell({ children, user, users, onUserChange }: { children: React.ReactNode; user: MockUser; users: MockUser[]; onUserChange: (user: MockUser) => void }) {
   return (
     <div className="h-screen bg-[#f3f2f1] overflow-hidden" style={{ fontFamily: "Segoe UI, Inter, system-ui, sans-serif" }}>
       <div className="h-full bg-white overflow-hidden flex flex-col">
@@ -1711,13 +2173,13 @@ function OutlookMockShell({ children, user, onUserChange }: { children: React.Re
             <select
               value={user.id}
               onChange={event => {
-                const nextUser = mockUsers.find(account => account.id === event.target.value);
+                const nextUser = users.find(account => account.id === event.target.value);
                 if (nextUser) onUserChange(nextUser);
               }}
               className="h-7 rounded border border-white/30 bg-white/15 px-2 text-xs font-semibold text-white outline-none"
               title="Demo user"
             >
-              {mockUsers.map(account => (
+              {users.map(account => (
                 <option key={account.id} value={account.id} className="text-slate-900">
                   {account.role}
                 </option>
@@ -1782,6 +2244,7 @@ function OutlookMockShell({ children, user, onUserChange }: { children: React.Re
 
 /* ─── Main App ─── */
 export default function App() {
+  const [demoUsers, setDemoUsers] = useState<MockUser[]>(mockUsers);
   const [currentUser, setCurrentUser] = useState<MockUser>(mockUsers[0]);
   const [activeView, setActiveView] = useState("dashboard");
   const [showNotifications, setShowNotifications] = useState(false);
@@ -1793,22 +2256,31 @@ export default function App() {
     setShowNotifications(false);
   };
 
+  const updateCurrentUserSkills = (skills: string[]) => {
+    setCurrentUser(current => ({ ...current, skills }));
+    setDemoUsers(users => users.map(user => user.id === currentUser.id ? { ...user, skills } : user));
+  };
+
   const unread = notifList.filter(n => !n.read).length;
 
   const navItems: NavItem[] = currentUser.role === "Panelist"
-    ? [{ id: "my-availability", label: "My Availability", icon: <CalendarCheck size={16} /> }]
+    ? [
+      { id: "my-availability", label: "My Availability", icon: <CalendarCheck size={16} /> },
+      { id: "profile", label: "My Profile", icon: <UserCheck size={16} /> },
+    ]
     : currentUser.role === "Manager"
     ? [
       { id: "manager-insights", label: "Team Insights", icon: <BarChart2 size={16} />, badge: 5 },
       { id: "my-availability", label: "My Availability", icon: <CalendarCheck size={16} /> },
+      { id: "profile", label: "My Profile", icon: <UserCheck size={16} /> },
     ]
     : [
       { id: "dashboard", label: "Dashboard", icon: <LayoutDashboard size={16} /> },
-      { id: "calendar", label: "Calendar", icon: <Calendar size={16} /> },
+      { id: "slot-helper", label: "Slot Helper", icon: <Zap size={16} /> },
       { id: "panelists", label: "Panelists", icon: <Users size={16} /> },
-      { id: "bookings", label: "Bookings", icon: <BookOpen size={16} />, badge: 2 },
       { id: "analytics", label: "Analytics", icon: <BarChart2 size={16} /> },
       { id: "reports", label: "Reports", icon: <FileText size={16} /> },
+      { id: "profile", label: "My Profile", icon: <UserCheck size={16} /> },
     ];
 
   const notifIcon: Record<string, React.ReactNode> = {
@@ -1819,7 +2291,7 @@ export default function App() {
   };
 
   return (
-    <OutlookMockShell user={currentUser} onUserChange={switchDemoUser}>
+    <OutlookMockShell user={currentUser} users={demoUsers} onUserChange={switchDemoUser}>
     <div className="flex h-full bg-[#f0f2f6] overflow-hidden" style={{ fontFamily: "Inter, system-ui, sans-serif" }}>
       {/* Sidebar */}
       <aside className="w-56 shrink-0 flex flex-col h-full" style={{ background: "#0f1c36" }}>
@@ -1856,31 +2328,7 @@ export default function App() {
               )}
             </button>
           ))}
-
-          {!["Panelist", "Manager"].includes(currentUser.role) && (
-            <div className="pt-4 mt-4 border-t" style={{ borderColor: "rgba(255,255,255,0.07)" }}>
-              <p className="text-[9px] font-bold uppercase tracking-widest px-2 py-1 mb-1" style={{ color: "rgba(200,211,232,0.4)" }}>Settings</p>
-              {[{ label: "Preferences", icon: <Settings size={15} /> }, { label: "Integrations", icon: <Layers size={15} /> }].map(item => (
-                <button key={item.label} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-[#c8d3e8] hover:bg-white/10 hover:text-white transition-all">
-                  {item.icon}
-                  <span>{item.label}</span>
-                </button>
-              ))}
-            </div>
-          )}
         </nav>
-
-        {/* User */}
-        <div className="px-3 pb-4">
-          <div className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg" style={{ background: "rgba(255,255,255,0.06)" }}>
-            <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-bold shrink-0">{currentUser.initials}</div>
-            <div className="min-w-0 flex-1">
-              <p className="text-xs font-semibold text-white truncate">{currentUser.name}</p>
-              <p className="text-[10px] truncate" style={{ color: "rgba(200,211,232,0.5)" }}>{currentUser.title}</p>
-            </div>
-            <ChevronDown size={12} style={{ color: "rgba(200,211,232,0.4)" }} />
-          </div>
-        </div>
       </aside>
 
       {/* Main Area */}
@@ -1890,11 +2338,11 @@ export default function App() {
           {activeView === "manager-insights" && <ManagerInsightsView user={currentUser} />}
           {activeView === "my-availability" && <PanelistAvailabilityView user={currentUser} />}
           {activeView === "dashboard" && <DashboardView onNavigate={setActiveView} user={currentUser} />}
-          {activeView === "calendar" && <CalendarView />}
+          {activeView === "slot-helper" && <SlotHelperView />}
           {activeView === "panelists" && <PanelistsView />}
-          {activeView === "bookings" && <BookingsView />}
           {activeView === "analytics" && <AnalyticsView />}
           {activeView === "reports" && <ReportsView />}
+          {activeView === "profile" && <ProfileView key={currentUser.id} user={currentUser} onUpdateSkills={updateCurrentUserSkills} />}
         </main>
       </div>
 
