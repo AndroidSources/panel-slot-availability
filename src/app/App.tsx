@@ -172,17 +172,8 @@ const interviewVolumeData = [
 const weekDays = ["Mon 26", "Tue 27", "Wed 28", "Thu 29", "Fri 30"];
 const timeSlots = ["9:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00"];
 const panelistWeekDays = ["Mon May 25", "Tue May 26", "Wed May 27", "Thu May 28", "Fri May 29"];
-const panelistSlotTimes = ["09:00", "10:00", "11:00", "12:00", "14:00", "15:00", "16:00", "17:00"];
-const panelistInitialSlots = [
-  "Mon May 25-10:00",
-  "Mon May 25-11:00",
-  "Tue May 26-14:00",
-  "Tue May 26-15:00",
-  "Wed May 27-09:00",
-  "Thu May 28-10:00",
-  "Thu May 28-11:00",
-  "Fri May 29-15:00",
-];
+const panelistSlotTimes = ["09:00", "10:00", "11:00", "13:00", "14:00", "15:00", "16:00", "17:00"];
+const panelistInitialSlots: string[] = [];
 
 const panelistContributionData = [
   { period: "Dec", slots: 18, interviews: 7 },
@@ -277,9 +268,83 @@ const practiceDistribution = [
   { name: "Payments", value: 12, color: "#06b6d4" },
 ];
 
+const inboxMessages = [
+  {
+    id: "panel-weekly-slots",
+    sender: "Aziro IQ",
+    senderEmail: "aziro-iq@aziro.com",
+    initials: "AI",
+    subject: "Action required: share your interview slots for this week",
+    preview: "Please provide your availability for May 25-29 so HR can schedule panel interviews.",
+    time: "Mon 9:00 AM",
+    unread: true,
+    focused: true,
+    category: "Interview panel",
+  },
+  {
+    id: "candidate-feedback",
+    sender: "Maya Iyer",
+    senderEmail: "maya.iyer@aziro.com",
+    initials: "MI",
+    subject: "Feedback notes for Aarav Iyer",
+    preview: "Thanks for joining the technical round. Please add final notes before EOD.",
+    time: "Fri 4:42 PM",
+    unread: false,
+    focused: true,
+    category: "Recruiting",
+  },
+  {
+    id: "architecture-review",
+    sender: "Arjun Mehta",
+    senderEmail: "arjun.mehta@aziro.com",
+    initials: "AM",
+    subject: "Architecture review prep",
+    preview: "Sharing the candidate packet and focus areas for next week's system design panel.",
+    time: "Fri 2:15 PM",
+    unread: false,
+    focused: true,
+    category: "Leadership",
+  },
+  {
+    id: "it-maintenance",
+    sender: "IT Service Desk",
+    senderEmail: "it.service@aziro.com",
+    initials: "IT",
+    subject: "Planned maintenance window",
+    preview: "VPN maintenance is scheduled on Saturday from 11:00 PM to 12:30 AM.",
+    time: "Thu 6:10 PM",
+    unread: false,
+    focused: false,
+    category: "IT",
+  },
+  {
+    id: "learning-newsletter",
+    sender: "Aziro Learning",
+    senderEmail: "learning@aziro.com",
+    initials: "AL",
+    subject: "New learning paths available",
+    preview: "Explore refreshed modules on AI engineering, cloud reliability, and secure design.",
+    time: "Thu 11:08 AM",
+    unread: false,
+    focused: false,
+    category: "Learning",
+  },
+];
+
 /* ─── Utils ─── */
 function cn(...classes: (string | boolean | undefined)[]): string {
   return classes.filter(Boolean).join(" ");
+}
+
+function formatSlotWindow(time: string): string {
+  const hour = Number(time.split(":")[0]);
+  const endHour = hour + 1;
+  const toDisplayHour = (value: number) => {
+    if (value === 0) return 12;
+    return value > 12 ? value - 12 : value;
+  };
+  const suffix = hour >= 13 ? " PM" : "";
+  return `${toDisplayHour(hour)}-${toDisplayHour(endHour)}${suffix}`;
 }
 
 function StatusBadge({ status }: { status: Status | BookingStatus }) {
@@ -1523,8 +1588,8 @@ function ReportsView() {
 function PanelistAvailabilityView({ user }: { user: MockUser }) {
   const [selectedSlots, setSelectedSlots] = useState(() => new Set(panelistInitialSlots));
   const [savedSlots, setSavedSlots] = useState(() => new Set(panelistInitialSlots));
-  const [leaveDays, setLeaveDays] = useState(() => new Set<string>(["Fri May 29"]));
-  const [savedLeaveDays, setSavedLeaveDays] = useState(() => new Set<string>(["Fri May 29"]));
+  const [leaveDays, setLeaveDays] = useState(() => new Set<string>());
+  const [savedLeaveDays, setSavedLeaveDays] = useState(() => new Set<string>());
 
   const toggleSlot = (slotKey: string) => {
     const day = slotKey.split("-").slice(0, 3).join("-");
@@ -1639,7 +1704,7 @@ function PanelistAvailabilityView({ user }: { user: MockUser }) {
           {panelistSlotTimes.map(time => (
             <Fragment key={time}>
               <div className="px-3 py-2 border-b border-r border-slate-100 bg-slate-50/50 flex items-center">
-                <span className="text-xs text-slate-400 font-medium" style={{ fontFamily: "JetBrains Mono, monospace" }}>{time}</span>
+                <span className="text-xs text-slate-400 font-medium whitespace-nowrap" style={{ fontFamily: "JetBrains Mono, monospace" }}>{formatSlotWindow(time)}</span>
               </div>
               {panelistWeekDays.map(day => {
                 const slotKey = `${day}-${time}`;
@@ -2147,7 +2212,106 @@ function LoginView({ onLogin }: { onLogin: (user: MockUser) => void }) {
   );
 }
 
-function OutlookMockShell({ children, user, users, onUserChange }: { children: React.ReactNode; user: MockUser; users: MockUser[]; onUserChange: (user: MockUser) => void }) {
+function InboxView({ user, onFillSlots }: { user: MockUser; onFillSlots: () => void }) {
+  const selectedMessage = inboxMessages[0];
+
+  return (
+    <div className="h-full min-h-0 grid grid-cols-[300px_1fr] bg-white text-[#242424]">
+      <div className="border-r border-[#e1dfdd] bg-white flex flex-col min-h-0">
+        <div className="px-4 py-3 border-b border-[#e1dfdd]">
+          <div className="flex items-center justify-between">
+            <h1 className="text-xl font-semibold text-[#242424]">Inbox</h1>
+            <span className="text-xs text-[#605e5c]">Focused</span>
+          </div>
+          <div className="mt-3 flex rounded border border-[#d1d1d1] overflow-hidden text-sm">
+            <button className="flex-1 bg-[#e5f1fb] text-[#0f6cbd] font-semibold py-1.5 border-r border-[#d1d1d1]">Focused</button>
+            <button className="flex-1 bg-white text-[#605e5c] py-1.5">Other</button>
+          </div>
+        </div>
+
+        <div className="flex-1 min-h-0 overflow-y-auto">
+          {inboxMessages.map(message => {
+            const selected = message.id === selectedMessage.id;
+            return (
+              <button
+                key={message.id}
+                className={cn(
+                  "w-full text-left px-3 py-3 border-b border-[#edebe9] flex gap-3 transition-colors",
+                  selected ? "bg-[#e5f1fb] border-l-4 border-l-[#0f6cbd]" : "bg-white border-l-4 border-l-transparent hover:bg-[#f3f2f1]"
+                )}
+              >
+                <Avatar initials={message.initials} size="sm" color={message.id === "panel-weekly-slots" ? "bg-blue-600" : undefined} />
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <p className={cn("text-sm truncate", message.unread ? "font-bold text-[#242424]" : "font-semibold text-[#323130]")}>{message.sender}</p>
+                    <span className="ml-auto text-xs text-[#605e5c] shrink-0">{message.time}</span>
+                  </div>
+                  <p className={cn("mt-0.5 text-sm truncate", message.unread ? "font-bold text-[#242424]" : "font-medium text-[#323130]")}>{message.subject}</p>
+                  <p className="mt-0.5 text-xs text-[#605e5c] truncate">{message.preview}</p>
+                  <div className="mt-2 flex items-center gap-2">
+                    <span className={cn("h-2 w-2 rounded-full", message.unread ? "bg-[#0f6cbd]" : "bg-transparent")} />
+                    <span className="text-[11px] rounded px-1.5 py-0.5 bg-[#f3f2f1] text-[#605e5c]">{message.category}</span>
+                  </div>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="min-w-0 bg-white flex flex-col">
+        <div className="px-8 py-5 border-b border-[#e1dfdd]">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h2 className="text-2xl font-semibold text-[#242424]">{selectedMessage.subject}</h2>
+              <div className="mt-4 flex items-center gap-3">
+                <Avatar initials={selectedMessage.initials} size="md" color="bg-blue-600" />
+                <div>
+                  <p className="text-sm font-semibold text-[#242424]">{selectedMessage.sender}</p>
+                  <p className="text-xs text-[#605e5c]">{selectedMessage.senderEmail} to {user.email}</p>
+                </div>
+              </div>
+            </div>
+            <div className="text-right shrink-0">
+              <p className="text-sm font-semibold text-[#323130]">Monday, May 25, 2026</p>
+              <p className="text-xs text-[#605e5c]">9:00 AM</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-y-auto px-8 py-7">
+          <div className="max-w-3xl">
+            <p className="text-sm text-[#323130]">Hi {user.name.split(" ")[0]},</p>
+            <p className="mt-4 text-sm leading-6 text-[#323130]">
+              Please provide your interview panel availability for this week, May 25-29. HR is opening candidate booking for multiple engineering rounds and needs your available slots before noon today.
+            </p>
+            <div className="my-6 rounded border border-[#d1e7dd] bg-[#f0f8f4] px-4 py-3">
+              <div className="flex items-start gap-3">
+                <CalendarCheck size={18} className="text-emerald-700 mt-0.5 shrink-0" />
+                <div>
+                  <p className="text-sm font-semibold text-[#0f5132]">Weekly slot request</p>
+                  <p className="mt-1 text-sm text-[#0f5132]">Week of May 25-29, 2026 · target: at least 6 slots · syncs with Outlook calendar after submission.</p>
+                </div>
+              </div>
+            </div>
+            <button
+              onClick={onFillSlots}
+              className="inline-flex items-center gap-2 rounded bg-[#0f6cbd] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#115ea3] transition-colors shadow-sm"
+            >
+              <CalendarCheck size={16} /> Fill slots
+            </button>
+            <p className="mt-5 text-sm leading-6 text-[#323130]">
+              Once submitted, your slots will be visible to the Talent Acquisition team for candidate scheduling. You can mark leave days directly from the slot form.
+            </p>
+            <p className="mt-6 text-sm text-[#323130]">Thanks,<br />Aziro IQ</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function OutlookMockShell({ children, user, users, onUserChange, activeSurface, onOpenInbox, onOpenPlugin }: { children: React.ReactNode; user: MockUser; users: MockUser[]; onUserChange: (user: MockUser) => void; activeSurface: "inbox" | "plugin"; onOpenInbox: () => void; onOpenPlugin: () => void }) {
   return (
     <div className="h-screen bg-[#f3f2f1] overflow-hidden" style={{ fontFamily: "Segoe UI, Inter, system-ui, sans-serif" }}>
       <div className="h-full bg-white overflow-hidden flex flex-col">
@@ -2218,12 +2382,18 @@ function OutlookMockShell({ children, user, users, onUserChange }: { children: R
               { label: "Calendar", icon: <Calendar size={19} /> },
               { label: "People", icon: <Users size={19} /> },
             ].map(item => (
-              <button key={item.label} title={item.label} className="w-9 h-9 rounded flex items-center justify-center hover:bg-white transition-colors">
+              <button
+                key={item.label}
+                title={item.label}
+                onClick={item.label === "Mail" ? onOpenInbox : undefined}
+                className={cn("relative w-9 h-9 rounded flex items-center justify-center hover:bg-white transition-colors", activeSurface === "inbox" && item.label === "Mail" && "bg-white shadow-sm")}
+              >
+                {activeSurface === "inbox" && item.label === "Mail" && <span className="absolute left-[-6px] top-0 bottom-0 w-0.5 rounded-full bg-[#0f6cbd]" />}
                 {item.icon}
               </button>
             ))}
-            <button title="Aziro IQ" className="relative w-9 h-9 rounded bg-white shadow-sm flex items-center justify-center">
-              <span className="absolute left-[-6px] top-0 bottom-0 w-0.5 rounded-full bg-[#0f6cbd]" />
+            <button title="Aziro IQ" onClick={onOpenPlugin} className={cn("relative w-9 h-9 rounded flex items-center justify-center", activeSurface === "plugin" ? "bg-white shadow-sm" : "hover:bg-white")}>
+              {activeSurface === "plugin" && <span className="absolute left-[-6px] top-0 bottom-0 w-0.5 rounded-full bg-[#0f6cbd]" />}
               <img src={aziroLogoUrl} alt="Aziro IQ" className="w-6 h-6 object-contain rounded bg-[#0f1c36] p-1" />
             </button>
             <button title="More apps" className="w-9 h-9 rounded flex items-center justify-center hover:bg-white transition-colors">
@@ -2245,14 +2415,24 @@ function OutlookMockShell({ children, user, users, onUserChange }: { children: R
 /* ─── Main App ─── */
 export default function App() {
   const [demoUsers, setDemoUsers] = useState<MockUser[]>(mockUsers);
-  const [currentUser, setCurrentUser] = useState<MockUser>(mockUsers[0]);
-  const [activeView, setActiveView] = useState("dashboard");
+  const [currentUser, setCurrentUser] = useState<MockUser>(mockUsers[2]);
+  const [activeView, setActiveView] = useState("my-availability");
+  const [activeSurface, setActiveSurface] = useState<"inbox" | "plugin">("inbox");
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifList, setNotifList] = useState(notifications);
 
   const switchDemoUser = (user: MockUser) => {
     setCurrentUser(user);
     setActiveView(user.role === "Panelist" ? "my-availability" : user.role === "Manager" ? "manager-insights" : "dashboard");
+    setActiveSurface("plugin");
+    setShowNotifications(false);
+  };
+
+  const openPanelistSlotFlow = () => {
+    const panelistUser = demoUsers.find(user => user.role === "Panelist") || mockUsers[2];
+    setCurrentUser(panelistUser);
+    setActiveView("my-availability");
+    setActiveSurface("plugin");
     setShowNotifications(false);
   };
 
@@ -2291,7 +2471,17 @@ export default function App() {
   };
 
   return (
-    <OutlookMockShell user={currentUser} users={demoUsers} onUserChange={switchDemoUser}>
+    <OutlookMockShell
+      user={currentUser}
+      users={demoUsers}
+      onUserChange={switchDemoUser}
+      activeSurface={activeSurface}
+      onOpenInbox={() => setActiveSurface("inbox")}
+      onOpenPlugin={() => setActiveSurface("plugin")}
+    >
+    {activeSurface === "inbox" ? (
+      <InboxView user={currentUser} onFillSlots={openPanelistSlotFlow} />
+    ) : (
     <div className="flex h-full bg-[#f0f2f6] overflow-hidden" style={{ fontFamily: "Inter, system-ui, sans-serif" }}>
       {/* Sidebar */}
       <aside className="w-56 shrink-0 flex flex-col h-full" style={{ background: "#0f1c36" }}>
@@ -2351,6 +2541,7 @@ export default function App() {
         <div className="fixed inset-0 z-40" onClick={() => setShowNotifications(false)} />
       )}
     </div>
+    )}
     </OutlookMockShell>
   );
 }
