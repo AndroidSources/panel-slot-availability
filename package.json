@@ -8,7 +8,9 @@
     "dev": "next dev",
     "start": "next start",
     "build:vite": "vite build",
-    "dev:vite": "vite"
+    "build:pages": "vite build",
+    "dev:vite": "vite",
+    "preview:pages": "VITE_BASE=/panel-slot-availability/ vite preview"
   },
   "dependencies": {
     "@emotion/react": "11.14.0",
