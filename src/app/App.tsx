@@ -19,6 +19,7 @@ import {
 type NavItem = { id: string; label: string; icon: React.ReactNode; badge?: number };
 type Status = "available" | "booked" | "partial" | "unavailable";
 type BookingStatus = "confirmed" | "pending" | "cancelled" | "completed";
+type OutlookSurface = "inbox" | "calendar" | "plugin";
 type MockRole = "HR / Talent Acquisition" | "Leadership Team" | "Panelist" | "Manager";
 type MockUser = {
   id: string;
@@ -331,6 +332,71 @@ const inboxMessages = [
   },
 ];
 
+const outlookCalendarDays = ["Mon 25", "Tue 26", "Wed 27", "Thu 28", "Fri 29"];
+const outlookCalendarHours = ["09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00"];
+const mynexthireInterviewSlots = [
+  {
+    id: "MNH-7210",
+    day: "Mon 25",
+    start: "10:00",
+    end: "11:00",
+    candidate: "Aarav Iyer",
+    role: "Staff Engineer",
+    round: "System Design",
+    panel: "Sanjana Rao, Rohan Kulkarni",
+    status: "Confirmed",
+    color: "bg-[#e5f1fb] border-[#0f6cbd] text-[#0f3a5f]",
+  },
+  {
+    id: "MNH-7211",
+    day: "Tue 26",
+    start: "14:00",
+    end: "15:00",
+    candidate: "Neha Reddy",
+    role: "Senior Data Engineer",
+    round: "Data Deep Dive",
+    panel: "Priya Sharma",
+    status: "Confirmed",
+    color: "bg-[#e9f5ee] border-[#107c41] text-[#0f5132]",
+  },
+  {
+    id: "MNH-7212",
+    day: "Wed 27",
+    start: "11:00",
+    end: "12:00",
+    candidate: "Rahul Patel",
+    role: "Frontend Engineer",
+    round: "React Coding",
+    panel: "Rohan Kulkarni",
+    status: "Tentative",
+    color: "bg-[#fff4ce] border-[#f3a800] text-[#5c3b00]",
+  },
+  {
+    id: "MNH-7213",
+    day: "Thu 28",
+    start: "15:00",
+    end: "16:30",
+    candidate: "Kavya Menon",
+    role: "Cloud Architect",
+    round: "Architecture Review",
+    panel: "Meera Krishnan, Sanjana Rao",
+    status: "Confirmed",
+    color: "bg-[#f3edfb] border-[#8661c5] text-[#3b2b63]",
+  },
+  {
+    id: "MNH-7214",
+    day: "Fri 29",
+    start: "09:00",
+    end: "09:45",
+    candidate: "Aditya Rao",
+    role: "iOS Engineer",
+    round: "Mobile Technical",
+    panel: "Karthik Menon",
+    status: "Confirmed",
+    color: "bg-[#fde7e9] border-[#d13438] text-[#5c1a1c]",
+  },
+];
+
 /* ─── Utils ─── */
 function cn(...classes: (string | boolean | undefined)[]): string {
   return classes.filter(Boolean).join(" ");
@@ -419,9 +485,6 @@ function DashboardView({ onNavigate, user }: { onNavigate: (v: string) => void; 
         <div className="flex items-center gap-2">
           <button className="flex items-center gap-1.5 text-sm text-slate-600 border border-slate-200 bg-white px-3 py-1.5 rounded-lg hover:bg-slate-50 transition-colors">
             <RefreshCw size={13} /> Sync Calendar
-          </button>
-          <button onClick={() => onNavigate("bookings")} className="flex items-center gap-1.5 text-sm bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 transition-colors font-medium">
-            <Plus size={13} /> Book Interview
           </button>
         </div>
       </div>
@@ -2311,7 +2374,135 @@ function InboxView({ user, onFillSlots }: { user: MockUser; onFillSlots: () => v
   );
 }
 
-function OutlookMockShell({ children, user, users, onUserChange, activeSurface, onOpenInbox, onOpenPlugin }: { children: React.ReactNode; user: MockUser; users: MockUser[]; onUserChange: (user: MockUser) => void; activeSurface: "inbox" | "plugin"; onOpenInbox: () => void; onOpenPlugin: () => void }) {
+function OutlookCalendarView() {
+  const selectedSlot = mynexthireInterviewSlots[0];
+
+  return (
+    <div className="h-full min-h-0 grid grid-cols-[260px_1fr] bg-white text-[#242424]">
+      <aside className="border-r border-[#e1dfdd] bg-white flex flex-col min-h-0">
+        <div className="px-4 py-3 border-b border-[#e1dfdd]">
+          <h1 className="text-xl font-semibold text-[#242424]">Calendar</h1>
+          <p className="mt-1 text-xs text-[#605e5c]">May 2026</p>
+        </div>
+
+        <div className="p-4 border-b border-[#edebe9]">
+          <div className="grid grid-cols-7 gap-1 text-center text-[11px] text-[#605e5c] mb-2">
+            {["S", "M", "T", "W", "T", "F", "S"].map((day, index) => <span key={`${day}-${index}`}>{day}</span>)}
+          </div>
+          <div className="grid grid-cols-7 gap-1 text-center text-xs">
+            {Array.from({ length: 35 }, (_, index) => {
+              const date = index - 4;
+              const inMonth = date > 0 && date <= 31;
+              const hasInterview = [25, 26, 27, 28, 29].includes(date);
+              const isToday = date === 25;
+              return (
+                <button
+                  key={index}
+                  className={cn(
+                    "h-8 rounded flex items-center justify-center relative",
+                    inMonth ? "text-[#242424] hover:bg-[#f3f2f1]" : "text-transparent",
+                    isToday && "bg-[#0f6cbd] text-white font-semibold hover:bg-[#0f6cbd]"
+                  )}
+                >
+                  {inMonth ? date : ""}
+                  {hasInterview && !isToday && <span className="absolute bottom-1 h-1 w-1 rounded-full bg-[#0f6cbd]" />}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="p-4 space-y-3 overflow-y-auto">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-[#605e5c]">myNextHire scheduled</p>
+            <p className="mt-1 text-2xl font-semibold text-[#242424]">{mynexthireInterviewSlots.length}</p>
+            <p className="text-xs text-[#605e5c]">candidate interview slots this week</p>
+          </div>
+
+          <div className="space-y-2">
+            {mynexthireInterviewSlots.map(slot => (
+              <button key={slot.id} className="w-full text-left rounded border border-[#edebe9] bg-white px-3 py-2 hover:bg-[#f8f8f8]">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-sm font-semibold text-[#242424] truncate">{slot.candidate}</p>
+                  <span className="text-[10px] font-semibold text-[#605e5c]">{slot.day}</span>
+                </div>
+                <p className="mt-0.5 text-xs text-[#605e5c] truncate">{slot.start}-{slot.end} · {slot.round}</p>
+              </button>
+            ))}
+          </div>
+        </div>
+      </aside>
+
+      <main className="min-w-0 flex flex-col bg-white">
+        <div className="px-6 py-4 border-b border-[#e1dfdd] flex items-center justify-between gap-4">
+          <div>
+            <h2 className="text-2xl font-semibold text-[#242424]">Work week</h2>
+            <p className="mt-1 text-sm text-[#605e5c]">May 25-29, 2026 · interviews scheduled by myNextHire</p>
+          </div>
+          <div className="flex items-center rounded border border-[#d1d1d1] overflow-hidden text-sm">
+            {["Day", "Work week", "Week", "Month"].map(item => (
+              <button key={item} className={cn("px-3 py-1.5", item === "Work week" ? "bg-[#e5f1fb] text-[#0f6cbd] font-semibold" : "bg-white text-[#424242] hover:bg-[#f3f2f1]")}>{item}</button>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex-1 min-h-0 overflow-auto">
+          <div className="min-w-[860px]">
+            <div className="grid sticky top-0 z-10 bg-white" style={{ gridTemplateColumns: "72px repeat(5, minmax(150px, 1fr))" }}>
+              <div className="h-14 border-b border-r border-[#edebe9] bg-white" />
+              {outlookCalendarDays.map(day => {
+                const [weekday, date] = day.split(" ");
+                return (
+                  <div key={day} className="h-14 border-b border-r border-[#edebe9] bg-white px-3 py-2 text-center">
+                    <p className="text-xs font-semibold text-[#605e5c]">{weekday}</p>
+                    <p className={cn("mx-auto mt-0.5 h-7 w-7 rounded-full text-sm font-semibold flex items-center justify-center", date === "25" ? "bg-[#0f6cbd] text-white" : "text-[#242424]")}>{date}</p>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="grid" style={{ gridTemplateColumns: "72px repeat(5, minmax(150px, 1fr))" }}>
+              {outlookCalendarHours.map(hour => (
+                <Fragment key={hour}>
+                  <div className="h-24 border-b border-r border-[#edebe9] bg-white px-2 py-2 text-right">
+                    <span className="text-xs text-[#605e5c]">{hour}</span>
+                  </div>
+                  {outlookCalendarDays.map(day => {
+                    const slot = mynexthireInterviewSlots.find(item => item.day === day && item.start === hour);
+                    return (
+                      <div key={`${day}-${hour}`} className="h-24 border-b border-r border-[#edebe9] bg-white p-1.5">
+                        {slot && (
+                          <button className={cn("h-full w-full rounded-sm border-l-4 px-2 py-1.5 text-left shadow-sm hover:brightness-[0.98]", slot.color)}>
+                            <div className="flex items-start justify-between gap-2">
+                              <p className="text-xs font-bold truncate">{slot.candidate}</p>
+                              <span className="text-[10px] font-bold shrink-0">{slot.status}</span>
+                            </div>
+                            <p className="mt-0.5 text-[11px] font-semibold truncate">{slot.start}-{slot.end}</p>
+                            <p className="mt-1 text-[11px] truncate">{slot.role}</p>
+                            <p className="text-[11px] truncate">{slot.round}</p>
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </Fragment>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="border-t border-[#e1dfdd] bg-[#faf9f8] px-6 py-3 flex items-center gap-3">
+          <CalendarCheck size={16} className="text-[#0f6cbd] shrink-0" />
+          <p className="text-sm text-[#323130]">
+            Selected: <span className="font-semibold">{selectedSlot.candidate}</span> · {selectedSlot.round} · {selectedSlot.panel} · source: myNextHire
+          </p>
+        </div>
+      </main>
+    </div>
+  );
+}
+
+function OutlookMockShell({ children, user, users, onUserChange, activeSurface, onOpenInbox, onOpenCalendar, onOpenPlugin }: { children: React.ReactNode; user: MockUser; users: MockUser[]; onUserChange: (user: MockUser) => void; activeSurface: OutlookSurface; onOpenInbox: () => void; onOpenCalendar: () => void; onOpenPlugin: () => void }) {
   return (
     <div className="h-screen bg-[#f3f2f1] overflow-hidden" style={{ fontFamily: "Segoe UI, Inter, system-ui, sans-serif" }}>
       <div className="h-full bg-white overflow-hidden flex flex-col">
@@ -2377,21 +2568,27 @@ function OutlookMockShell({ children, user, users, onUserChange, activeSurface, 
 
         <div className="flex-1 min-h-0 flex bg-[#f3f2f1]">
           <div className="w-12 bg-[#f7f7f7] border-r border-[#e1dfdd] flex flex-col items-center py-3 gap-3 shrink-0 text-[#0078d4]">
-            {[
-              { label: "Mail", icon: <Mail size={19} /> },
-              { label: "Calendar", icon: <Calendar size={19} /> },
-              { label: "People", icon: <Users size={19} /> },
-            ].map(item => (
-              <button
-                key={item.label}
-                title={item.label}
-                onClick={item.label === "Mail" ? onOpenInbox : undefined}
-                className={cn("relative w-9 h-9 rounded flex items-center justify-center hover:bg-white transition-colors", activeSurface === "inbox" && item.label === "Mail" && "bg-white shadow-sm")}
-              >
-                {activeSurface === "inbox" && item.label === "Mail" && <span className="absolute left-[-6px] top-0 bottom-0 w-0.5 rounded-full bg-[#0f6cbd]" />}
-                {item.icon}
-              </button>
-            ))}
+            <button
+              title="Mail"
+              aria-label="Open Outlook mail"
+              onClick={onOpenInbox}
+              className={cn("relative w-9 h-9 rounded flex items-center justify-center hover:bg-white transition-colors", activeSurface === "inbox" && "bg-white shadow-sm")}
+            >
+              {activeSurface === "inbox" && <span className="absolute left-[-6px] top-0 bottom-0 w-0.5 rounded-full bg-[#0f6cbd]" />}
+              <Mail size={19} />
+            </button>
+            <button
+              title="Calendar"
+              aria-label="Open Outlook calendar"
+              onClick={onOpenCalendar}
+              className={cn("relative w-9 h-9 rounded flex items-center justify-center hover:bg-white transition-colors", activeSurface === "calendar" && "bg-white shadow-sm")}
+            >
+              {activeSurface === "calendar" && <span className="absolute left-[-6px] top-0 bottom-0 w-0.5 rounded-full bg-[#0f6cbd]" />}
+              <Calendar size={19} />
+            </button>
+            <button title="People" aria-label="People" className="relative w-9 h-9 rounded flex items-center justify-center hover:bg-white transition-colors">
+              <Users size={19} />
+            </button>
             <button title="Aziro IQ" onClick={onOpenPlugin} className={cn("relative w-9 h-9 rounded flex items-center justify-center", activeSurface === "plugin" ? "bg-white shadow-sm" : "hover:bg-white")}>
               {activeSurface === "plugin" && <span className="absolute left-[-6px] top-0 bottom-0 w-0.5 rounded-full bg-[#0f6cbd]" />}
               <img src={aziroLogoUrl} alt="Aziro IQ" className="w-6 h-6 object-contain rounded bg-[#0f1c36] p-1" />
@@ -2417,7 +2614,7 @@ export default function App() {
   const [demoUsers, setDemoUsers] = useState<MockUser[]>(mockUsers);
   const [currentUser, setCurrentUser] = useState<MockUser>(mockUsers[2]);
   const [activeView, setActiveView] = useState("my-availability");
-  const [activeSurface, setActiveSurface] = useState<"inbox" | "plugin">("inbox");
+  const [activeSurface, setActiveSurface] = useState<OutlookSurface>("inbox");
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifList, setNotifList] = useState(notifications);
 
@@ -2477,10 +2674,13 @@ export default function App() {
       onUserChange={switchDemoUser}
       activeSurface={activeSurface}
       onOpenInbox={() => setActiveSurface("inbox")}
+      onOpenCalendar={() => setActiveSurface("calendar")}
       onOpenPlugin={() => setActiveSurface("plugin")}
     >
     {activeSurface === "inbox" ? (
       <InboxView user={currentUser} onFillSlots={openPanelistSlotFlow} />
+    ) : activeSurface === "calendar" ? (
+      <OutlookCalendarView />
     ) : (
     <div className="flex h-full bg-[#f0f2f6] overflow-hidden" style={{ fontFamily: "Inter, system-ui, sans-serif" }}>
       {/* Sidebar */}
@@ -2528,6 +2728,7 @@ export default function App() {
           {activeView === "manager-insights" && <ManagerInsightsView user={currentUser} />}
           {activeView === "my-availability" && <PanelistAvailabilityView user={currentUser} />}
           {activeView === "dashboard" && <DashboardView onNavigate={setActiveView} user={currentUser} />}
+          {activeView === "outlook-calendar" && <OutlookCalendarView />}
           {activeView === "slot-helper" && <SlotHelperView />}
           {activeView === "panelists" && <PanelistsView />}
           {activeView === "analytics" && <AnalyticsView />}
